@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 
 ADD pynsxv/ /opt/pynsxv/
+ADD pyvmomi/ /opt/pyvmomi/
 
 # install base python packages and PyNSXv
 RUN \
