@@ -56,11 +56,6 @@ def get_args():
                         action='store',
                         help='Vlan ID')
 
-    parser.add_argument('-c', '--skip_verification',
-                        required=False,
-                        action='store_true',
-                        help='Skip SSL verification')
-
     parser.add_argument('-r', '--regex_esxi',
                         required=False,
                         default=None,
@@ -112,16 +107,10 @@ def AddHostPortgroup(host, vswitchName, portgroupName, vlanId):
 
 def main():
     args = get_args()
-    if args.skip_verification:
-        serviceInstance = SmartConnectNoSSL(host=args.host,
-                                            user=args.user,
-                                            pwd=args.password,
-                                            port=443)
-    else:
-        serviceInstance = SmartConnect(host=args.host,
-                                       user=args.user,
-                                       pwd=args.password,
-                                       port=443)
+    serviceInstance = SmartConnectNoSSL(host=args.host,
+                                        user=args.user,
+                                        pwd=args.password,
+                                        port=443)
     atexit.register(Disconnect, serviceInstance)
     content = serviceInstance.RetrieveContent()
 
