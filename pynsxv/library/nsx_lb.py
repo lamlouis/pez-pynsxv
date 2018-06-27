@@ -168,12 +168,24 @@ def add_app_rule(client_session, esg_name, rule_name, rule_script):
     if not esg_id:
         return None
 
-    rule_dict = client_session.extract_resource_body_example('appRules', 'create')
+#    rule_dict = client_session.extract_resource_body_example('appRules', 'create')
+#    rule_dict['applicationRule']['name'] = rule_name
+#    rule_dict['applicationRule']['script'] = rule_script
+#    result = client_session.create('appRules', uri_parameters={'edgeId': esg_id}, request_body_dict=rule_dict)
 
-    rule_dict['applicationRule']['name'] = rule_name
-    rule_dict['applicationRule']['script'] = rule_script
+    # hack to create two rules because \r\n doesn't get passed correctly
 
-    result = client_session.create('appRules', uri_parameters={'edgeId': esg_id}, request_body_dict=rule_dict)
+    rule_dict1 = client_session.extract_resource_body_example('appRules', 'create')
+    rule_dict1['applicationRule']['name'] = rule_name
+    rule_dict1['applicationRule']['script'] = 'acl OM hdr_beg(host) -i opsmgr \r\n use_backend OpsManager-HTTP-Pool if OM'
+    result = client_session.create('appRules', uri_parameters={'edgeId': esg_id}, request_body_dict=rule_dict1)
+
+    rule_dict2 = client_session.extract_resource_body_example('appRules', 'create')
+    rule_dict2['applicationRule']['name'] = rule_name
+    rule_dict2['applicationRule']['script'] = 'acl OM hdr_beg(host) -i opsmgr \r\n use_backend OpsManager-HTTPS-Pool if OM'
+    result = client_session.create('appRules', uri_parameters={'edgeId': esg_id}, request_body_dict=rule_dict2)
+
+
     if result['status'] != 201:
         return None
     else:
@@ -197,6 +209,7 @@ def _add_app_rule(client_session, **kwargs):
 
 
 def add_rule_to_vip(client_session, esg_name, rule_name, vip_name):
+
 
     esg_id, esg_params = get_edge(client_session, esg_name)
     if not esg_id:
