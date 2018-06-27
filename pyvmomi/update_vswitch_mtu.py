@@ -45,16 +45,6 @@ def get_args():
                         action='store',
                         help='vSwitch to create')
 
-    parser.add_argument('--uplink1',
-                        required=True,
-                        action='store',
-                        help='Uplink1')
-
-    parser.add_argument('--uplink2',
-                        required=True,
-                        action='store',
-                        help='Uplink2')
-
     args = parser.parse_args()
     return args
 
@@ -68,18 +58,18 @@ def GetVMHosts(content):
     return obj
 
 
-def AddHostsSwitch(hosts, vswitchName, uplink1, uplink2):
+def UpdateHostsSwitch(hosts, vswitchName):
     for host in hosts:
-        AddHostSwitch(host, vswitchName, uplink1, uplink2)
+        UpdateHostSwitch(host, vswitchName)
 
 
-def AddHostSwitch(host, vswitchName, uplink1, uplink2):
+def UpdateHostSwitch(host, vswitchName):
     vswitch_spec = vim.host.VirtualSwitch.Specification()
-    vswitch_spec.numPorts = 64
-    vswitch_spec.mtu = 1500
-    vswitch_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=[uplink1,uplink2])
-    host.configManager.networkSystem.AddVirtualSwitch(vswitchName,
+    vswitch_spec.numPorts = 1024
+    vswitch_spec.mtu = 1600
+    host.configManager.networkSystem.UpdateVirtualSwitch(vswitchName,
                                                       vswitch_spec)
+
 
 def main():
     args = get_args()
@@ -91,7 +81,7 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content)
-    AddHostsSwitch(hosts, args.vswitch, args.uplink1, args.uplink2)
+    UpdateHostsSwitch(hosts, args.vswitch)
 
 
 # Main section
