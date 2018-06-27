@@ -45,6 +45,12 @@ def get_args():
                         action='store',
                         help='vSwitch to create')
 
+    parser.add_argument('-m', '--mtu',
+                        type=int,
+                        required=True,
+                        action='store',
+                        help='mtu value')
+
     args = parser.parse_args()
     return args
 
@@ -58,15 +64,15 @@ def GetVMHosts(content):
     return obj
 
 
-def UpdateHostsSwitch(hosts, vswitchName):
+def UpdateHostsSwitch(hosts, vswitchName, mtu):
     for host in hosts:
-        UpdateHostSwitch(host, vswitchName)
+        UpdateHostSwitch(host, vswitchName, mtu)
 
 
-def UpdateHostSwitch(host, vswitchName):
+def UpdateHostSwitch(host, vswitchName, mtu):
     vswitch_spec = vim.host.VirtualSwitch.Specification()
     vswitch_spec.numPorts = 1024
-    vswitch_spec.mtu = 1600
+    vswitch_spec.mtu = mtu
     host.configManager.networkSystem.UpdateVirtualSwitch(vswitchName,
                                                       vswitch_spec)
 
@@ -81,7 +87,7 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content)
-    UpdateHostsSwitch(hosts, args.vswitch)
+    UpdateHostsSwitch(hosts, args.vswitch, args.mtu)
 
 
 # Main section
