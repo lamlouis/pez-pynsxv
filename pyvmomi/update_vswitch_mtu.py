@@ -40,16 +40,16 @@ def get_args():
                         action='store',
                         help='Password to use')
 
-    parser.add_argument('-v', '--vswitch',
-                        required=True,
-                        action='store',
-                        help='vSwitch to create')
-
     parser.add_argument('-m', '--mtu',
                         type=int,
                         required=True,
                         action='store',
-                        help='mtu value')
+                        help='mtu')
+
+    parser.add_argument('-v', '--vswitch',
+                        required=True,
+                        action='store',
+                        help='vSwitch to create')
 
     args = parser.parse_args()
     return args
@@ -64,17 +64,27 @@ def GetVMHosts(content):
     return obj
 
 
-def UpdateHostsSwitch(hosts, vswitchName, mtu):
+def UpdateHostsSwitch(content, hosts, vswitchName, mtu):
     for host in hosts:
-        UpdateHostSwitch(host, vswitchName, mtu)
+        UpdateHostSwitch(content, host, vswitchName, mtu)
 
 
-def UpdateHostSwitch(host, vswitchName, mtu):
-    vswitch_spec = vim.host.VirtualSwitch.Specification()
-    vswitch_spec.numPorts = 1024
-    vswitch_spec.mtu = mtu
-    host.configManager.networkSystem.UpdateVirtualSwitch(vswitchName,
-                                                      vswitch_spec)
+def UpdateHostSwitch(content, host, vswitchName, mtu):
+    for host in _get_vim_objects(content, vim.HostSystem):
+      for vswitch in host.config.network.vswitch:
+         if vswitch.name == vswitchName:
+            vswitch_spec = vim.host.VirtualSwitch.Specification()
+            vswitch_spec = vswitch.spec
+            vswitch_spec.mtu = mtu
+    host.configManager.networkSystem.UpdateVirtualSwitch(vswitchName, vswitch_spec)
+
+
+def _get_vim_objects(content, vim_type):
+    '''Get vim objects of a given type.'''
+    return [item for item in content.viewManager.CreateContainerView(
+        content.rootFolder, [vim_type], recursive=True
+    ).view]
+
 
 
 def main():
@@ -87,7 +97,7 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content)
-    UpdateHostsSwitch(hosts, args.vswitch, args.mtu)
+    UpdateHostsSwitch(content, hosts, args.vswitch, args.mtu)
 
 
 # Main section
