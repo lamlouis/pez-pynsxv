@@ -14,8 +14,6 @@ import atexit
 import sys
 import argparse
 import re
-import pprint
-
 
 def get_args():
     parser = argparse.ArgumentParser(
