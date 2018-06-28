@@ -14,7 +14,6 @@ import atexit
 import sys
 import argparse
 
-
 def get_args():
     parser = argparse.ArgumentParser(
         description='Arguments for talking to vCenter')
@@ -81,6 +80,18 @@ def AddHostSwitch(host, vswitchName, uplink1, uplink2):
     host.configManager.networkSystem.AddVirtualSwitch(vswitchName,
                                                       vswitch_spec)
 
+def checkvSwitchExistence(hosts, vswitch):
+    hostSwitchesDict = {}
+    for host in hosts:
+        switches = host.config.network.vswitch
+        hostSwitchesDict[host] = switches
+
+    for host, vswitches in hostSwitchesDict.items():
+            for v in vswitches:
+                if v.name == vswitch:
+                    return True
+    return False
+
 def main():
     args = get_args()
     serviceInstance = SmartConnectNoSSL(host=args.host,
@@ -91,7 +102,14 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content)
-    AddHostsSwitch(hosts, args.vswitch, args.uplink1, args.uplink2)
+
+
+    if checkvSwitchExistence(hosts, args.vswitch):
+        print(args.vswitch + ' already exists. Skipping')
+        return True
+    else:
+        print('Creating ' + args.vswitch + '')
+        AddHostsSwitch(hosts, args.vswitch, args.uplink1, args.uplink2)
 
 
 # Main section

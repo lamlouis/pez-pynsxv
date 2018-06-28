@@ -86,6 +86,13 @@ def _get_vim_objects(content, vim_type):
     ).view]
 
 
+def checkvSwitchMTU(content, hosts, vswitchName, mtu):
+    for host in _get_vim_objects(content, vim.HostSystem):
+      for vswitch in host.config.network.vswitch:
+         if vswitch.name == vswitchName:
+             if vswitch.mtu == mtu:
+                return True
+    return False
 
 def main():
     args = get_args()
@@ -97,7 +104,12 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content)
-    UpdateHostsSwitch(content, hosts, args.vswitch, args.mtu)
+
+    if checkvSwitchMTU(content, hosts, args.vswitch, args.mtu):
+        print("MTU is already set to "+str(args.mtu))
+    else:
+        UpdateHostsSwitch(content, hosts, args.vswitch, args.mtu)
+        print("MTU on " + args.vswitch + "updated to " + str(args.mtu))
 
 
 # Main section

@@ -14,6 +14,7 @@ import atexit
 import sys
 import argparse
 import re
+import pprint
 
 
 def get_args():
@@ -104,6 +105,18 @@ def AddHostPortgroup(host, vswitchName, portgroupName, vlanId):
 
     host.configManager.networkSystem.AddPortGroup(portgroup_spec)
 
+def checkvPortgroupExistence(content, hosts, portgroupName):
+    for host in _get_vim_objects(content, vim.HostSystem):
+        for pg in host.config.network.portgroup:
+            if pg.spec.name == portgroupName:
+                return True
+    return False
+
+def _get_vim_objects(content, vim_type):
+    '''Get vim objects of a given type.'''
+    return [item for item in content.viewManager.CreateContainerView(
+        content.rootFolder, [vim_type], recursive=True
+    ).view]
 
 def main():
     args = get_args()
@@ -115,7 +128,15 @@ def main():
     content = serviceInstance.RetrieveContent()
 
     hosts = GetVMHosts(content, args.regex_esxi)
-    AddHostsPortgroup(hosts, args.vswitch, args.portgroup, args.vlanid)
+
+    if checkvPortgroupExistence(content, hosts, args.portgroup):
+        print(args.portgroup + " already exists")
+    else:
+        AddHostsPortgroup(hosts, args.vswitch, args.portgroup, args.vlanid)
+        print(args.portgroup + " created on " + args.vswitch)
+
+
+
 
 
 # Main section
