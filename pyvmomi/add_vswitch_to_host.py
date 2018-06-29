@@ -106,7 +106,6 @@ def main():
 
     if checkvSwitchExistence(hosts, args.vswitch):
         print(args.vswitch + ' already exists. Skipping')
-        return True
     else:
         print('Creating ' + args.vswitch + '')
         AddHostsSwitch(hosts, args.vswitch, args.uplink1, args.uplink2)
