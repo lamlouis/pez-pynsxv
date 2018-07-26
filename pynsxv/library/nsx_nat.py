@@ -10,7 +10,7 @@ from argparse import RawTextHelpFormatter
 from pkg_resources import resource_filename
 
 
-def add_nat_rule(client_session, esg_name, nat_type, nat_vnic, original_ip, translated_ip, original_port, translated_port):
+def add_nat_rule(client_session, esg_name, nat_type, nat_vnic, original_ip, translated_ip, original_port, translated_port, protocol, description):
     """
     This function adds an NAT to an ESG
 
@@ -36,9 +36,9 @@ def add_nat_rule(client_session, esg_name, nat_type, nat_vnic, original_ip, tran
     #'translatedPort': None, 'action': None, 'originalPort': None}}}
 
     nat_dict['natRules']['natRule']['vnic'] = nat_vnic
-    nat_dict['natRules']['natRule']['protocol'] = 'any'
-    nat_dict['natRules']['natRule']['description'] = ''
-    nat_dict['natRules']['natRule']['loggingEnabled'] = 'false'
+    nat_dict['natRules']['natRule']['protocol'] = protocol
+    nat_dict['natRules']['natRule']['description'] = description
+    nat_dict['natRules']['natRule']['loggingEnabled'] = 'true'
     nat_dict['natRules']['natRule']['translatedAddress'] = translated_ip
     nat_dict['natRules']['natRule']['enabled'] = 'true'
     nat_dict['natRules']['natRule']['originalAddress'] = original_ip
@@ -54,11 +54,11 @@ def add_nat_rule(client_session, esg_name, nat_type, nat_vnic, original_ip, tran
         return result['objectId']
 
 def _add_nat_rule(client_session, **kwargs):
-    needed_params = ['esg_name', 'nat_type', 'nat_vnic', 'original_ip', 'translated_ip', 'original_port', 'translated_port' ]
+    needed_params = ['esg_name', 'nat_type', 'nat_vnic', 'original_ip', 'translated_ip', 'original_port', 'translated_port', 'protocol', 'description' ]
     if not check_for_parameters(needed_params, kwargs):
         return None
 
-    result = add_nat_rule(client_session, kwargs['esg_name'], kwargs['nat_type'], kwargs['nat_vnic'], kwargs['original_ip'], kwargs['translated_ip'], kwargs['original_port'],kwargs['translated_port'])
+    result = add_nat_rule(client_session, kwargs['esg_name'], kwargs['nat_type'], kwargs['nat_vnic'], kwargs['original_ip'], kwargs['translated_ip'], kwargs['original_port'],kwargs['translated_port'], kwargs['protocol'], kwargs['description'])
 
     if result and kwargs['verbose']:
         print result
@@ -97,6 +97,12 @@ def contruct_parser(subparsers):
     parser.add_argument("-i",
                         "--nat_vnic",
                         help="Interface on which the translating is applied")
+    parser.add_argument("-p",
+                        "--protocol",
+                        help="protocol")
+    parser.add_argument("-d",
+                        "--description",
+                        help="description")
 
 
     parser.set_defaults(func=_nat_main)
@@ -131,7 +137,9 @@ def _nat_main(args):
                                         nat_type=args.nat_type,
                                         original_port=args.original_port,
                                         translated_port=args.translated_port,
-                                        nat_vnic=args.nat_vnic
+                                        nat_vnic=args.nat_vnic,
+                                        protocol=args.protocol,
+                                        description=args.description,
                                        )
     except KeyError:
         print('Unknown command')
