@@ -10,9 +10,9 @@ from argparse import RawTextHelpFormatter
 from pkg_resources import resource_filename
 
 
-def add_nat_rule(client_session, esg_name, nat_type, original_ip, translated_ip):
+def add_nat_rule(client_session, esg_name, nat_type, nat_vnic, original_ip, translated_ip, original_port, translated_port):
     """
-    This function adds an Load Balancer Application profile to an ESG
+    This function adds an NAT to an ESG
 
     :type client_session: nsxramlclient.client.NsxClient
     :param client_session: A nsxramlclient session Object
@@ -34,10 +34,8 @@ def add_nat_rule(client_session, esg_name, nat_type, original_ip, translated_ip)
     #{'natRules': {'natRule': {'vnic': None, 'protocol': None, 'description': None,
     #'loggingEnabled': None, 'translatedAddress': None, 'enabled': None, 'originalAddress': None,
     #'translatedPort': None, 'action': None, 'originalPort': None}}}
-    del nat_dict['natRules']['natRule']['translatedPort']
-    del nat_dict['natRules']['natRule']['originalPort']
 
-    nat_dict['natRules']['natRule']['vnic'] = '0'
+    nat_dict['natRules']['natRule']['vnic'] = nat_vnic
     nat_dict['natRules']['natRule']['protocol'] = 'any'
     nat_dict['natRules']['natRule']['description'] = ''
     nat_dict['natRules']['natRule']['loggingEnabled'] = 'false'
@@ -45,6 +43,8 @@ def add_nat_rule(client_session, esg_name, nat_type, original_ip, translated_ip)
     nat_dict['natRules']['natRule']['enabled'] = 'true'
     nat_dict['natRules']['natRule']['originalAddress'] = original_ip
     nat_dict['natRules']['natRule']['action'] = nat_type
+    nat_dict['natRules']['natRule']['translatedPort'] = translated_port
+    nat_dict['natRules']['natRule']['originalPort'] = original_port
 
     result = client_session.create('edgeNatRules', uri_parameters={'edgeId': esg_id},
                                    request_body_dict=nat_dict)
@@ -54,11 +54,11 @@ def add_nat_rule(client_session, esg_name, nat_type, original_ip, translated_ip)
         return result['objectId']
 
 def _add_nat_rule(client_session, **kwargs):
-    needed_params = ['esg_name', 'nat_type', 'original_ip', 'translated_ip']
+    needed_params = ['esg_name', 'nat_type', 'nat_vnic', 'original_ip', 'translated_ip', 'original_port', 'translated_port' ]
     if not check_for_parameters(needed_params, kwargs):
         return None
 
-    result = add_nat_rule(client_session, kwargs['esg_name'], kwargs['nat_type'], kwargs['original_ip'], kwargs['translated_ip'])
+    result = add_nat_rule(client_session, kwargs['esg_name'], kwargs['nat_type'], kwargs['nat_vnic'], kwargs['original_ip'], kwargs['translated_ip'], kwargs['original_port'],kwargs['translated_port'])
 
     if result and kwargs['verbose']:
         print result
@@ -88,6 +88,16 @@ def contruct_parser(subparsers):
     parser.add_argument("-tip",
                         "--translated_ip",
                         help="Translated IP Address")
+    parser.add_argument("-op",
+                        "--original_port",
+                        help="Original port")
+    parser.add_argument("-tp",
+                        "--translated_port",
+                        help="Translated port")
+    parser.add_argument("-i",
+                        "--nat_vnic",
+                        help="Interface on which the translating is applied")
+
 
     parser.set_defaults(func=_nat_main)
 
@@ -114,8 +124,17 @@ def _nat_main(args):
         command_selector = {
             'add_nat': _add_nat_rule,
             }
-        command_selector[args.command](client_session, esg_name=args.esg_name, original_ip=args.original_ip,
-                                       translated_ip=args.translated_ip, verbose=args.verbose, nat_type=args.nat_type)
+        command_selector[args.command](client_session, esg_name=args.esg_name,
+                                        original_ip=args.original_ip,
+                                        translated_ip=args.translated_ip,
+                                        verbose=args.verbose,
+                                        nat_type=args.nat_type,
+                                        original_port=args.original_port,
+                                        translated_port=args.translated_port,
+                                        verbose=args.verbose,
+                                        nat_type=args.nat_type,
+                                        nat_vnic=args.nat_vnic
+                                       )
     except KeyError:
         print('Unknown command')
 
