@@ -131,7 +131,6 @@ def _nat_main(args):
                                         nat_type=args.nat_type,
                                         original_port=args.original_port,
                                         translated_port=args.translated_port,
-                                        verbose=args.verbose,
                                         nat_type=args.nat_type,
                                         nat_vnic=args.nat_vnic
                                        )
